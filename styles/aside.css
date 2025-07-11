@@ -1,0 +1,13 @@
+main .aside{
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+    height: 90vh;
+    left: 0;
+    top: 5%;
+    position: absolute;
+    padding: 20px;
+    background-color: #716d6d;
+    border-left: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
