@@ -27,7 +27,7 @@ public class VelocidadVientoController {
         } else if (limit < 1) {
             limit = 1000;
         }
-        List<VelocidadViento> datos =  repository.findWithLimit(limit);
+        List<VelocidadViento> datos = repository.findWithLimit(limit);
         System.out.println("Registros encontrados: " + datos.size());
         return datos;
     }
@@ -35,19 +35,19 @@ public class VelocidadVientoController {
     @GetMapping("/departamento/{dep}")
     public List<VelocidadViento> getByDepartamento(
             @PathVariable String dep,
-            @RequestParam(name = "limit", defaultValue = "1000") int limit){
+            @RequestParam(name = "limit", defaultValue = "1000") int limit) {
 
         if (limit > 100000) limit = 100000;
         if (limit < 1) limit = 1000;
 
-        List<VelocidadViento> datos =  repository.findByDepartamento(dep, limit);
+        List<VelocidadViento> datos = repository.findByDepartamento(dep, limit);
         return datos;
     }
 
     @GetMapping("/municipio/{mun}")
     public List<VelocidadViento> getByMunicipio(
             @PathVariable String mun,
-            @RequestParam(name = "limit", defaultValue = "1000") int limit){
+            @RequestParam(name = "limit", defaultValue = "1000") int limit) {
 
         if (limit > 100000) limit = 100000;
         if (limit < 1) limit = 1000;
@@ -56,7 +56,16 @@ public class VelocidadVientoController {
         return datos;
     }
 
+    @GetMapping("/estacion/{codigo}")
+    public List<VelocidadViento> getByCodigoEstacion(
+            @PathVariable String codigo,
+            @RequestParam(name = "limit", defaultValue = "1000") int limit) {
+        if (limit > 100000) limit = 100000;
+        if (limit < 1) limit = 1000;
 
-
+        List<VelocidadViento> datos = repository.findbyCodigoEstacion(codigo, limit);
+        return datos;
+    }
 }
+
 
