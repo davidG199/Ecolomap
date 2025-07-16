@@ -12,7 +12,10 @@ public interface VelocidadVientoRepository extends JpaRepository<VelocidadViento
     @Query(value = "SELECT * FROM velocidad_viento LIMIT :limit", nativeQuery = true)
     List<VelocidadViento> findWithLimit(@Param("limit") int limit);
 
-    List<VelocidadViento> findByDepartamento(String departamento);
-    List<VelocidadViento> findByMunicipio(String municipio);
+    @Query(value = "SELECT * FROM velocidad_viento WHERE departamento = :dep LIMIT :limit", nativeQuery = true)
+    List<VelocidadViento> findByDepartamento(@Param("dep") String dep, @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM velocidad_viento WHERE municipio = :dep LIMIT :limit", nativeQuery = true)
+    List<VelocidadViento> findByMunicipio(@Param("mun") String mun, @Param("limit") int limit);
 
 }

@@ -17,8 +17,6 @@ public class VelocidadVientoController {
         this.repository = repository;
     }
 
-
-
     @GetMapping
     public List<VelocidadViento> getLimited(
             @RequestParam(name = "limit", defaultValue = "1000") int limit) {
@@ -35,13 +33,27 @@ public class VelocidadVientoController {
     }
 
     @GetMapping("/departamento/{dep}")
-    public List<VelocidadViento> getByDepartamento(@PathVariable String dep){
-        return repository.findByDepartamento(dep);
+    public List<VelocidadViento> getByDepartamento(
+            @PathVariable String dep,
+            @RequestParam(name = "limit", defaultValue = "1000") int limit){
+
+        if (limit > 100000) limit = 100000;
+        if (limit < 1) limit = 1000;
+
+        List<VelocidadViento> datos =  repository.findByDepartamento(dep, limit);
+        return datos;
     }
 
     @GetMapping("/municipio/{mun}")
-    public List<VelocidadViento> getByMunicipio(@PathVariable String mun){
-        return repository.findByMunicipio(mun);
+    public List<VelocidadViento> getByMunicipio(
+            @PathVariable String mun,
+            @RequestParam(name = "limit", defaultValue = "1000") int limit){
+
+        if (limit > 100000) limit = 100000;
+        if (limit < 1) limit = 1000;
+
+        List<VelocidadViento> datos = repository.findByMunicipio(mun, limit);
+        return datos;
     }
 
 
