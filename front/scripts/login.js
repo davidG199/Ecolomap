@@ -197,18 +197,11 @@
             
             try {
                 // PASO 1: Capturar datos
-                console.log('🔍 PASO 1: Obtenido datos del login...');
+                console.log('PASO 1: Obtenido datos del login...');
                 const capturedData = dataManager.captureLoginData();
                 
-                // Mostrar datos capturados al usuario
-                alert(`DATOS OBTENIDOS:\n\n` +
-                      `Email: ${capturedData.email}\n` +
-                      `Contraseña: ${'*'.repeat(capturedData.password.length)}\n` +
-                      `Recordar: ${capturedData.remember ? 'Sí' : 'No'}\n` +
-                      `Tiempo: ${new Date(capturedData.timestamp).toLocaleString()}`);
-                
                 // PASO 2: Validar datos
-                console.log('✅ PASO 2: Validando datos...');
+                console.log('PASO 2: Validando datos...');
                 const validation = dataManager.validateData(capturedData, 'login');
                 
                 if (!validation.isValid) {
@@ -216,20 +209,24 @@
                     return;
                 }
                 
-                alert('✅ VALIDACIÓN EXITOSA\n\nProcediendo a verificar acceso...');
                 
                 // PASO 3: Procesar acceso
-                console.log('🚀 PASO 3: Procesando acceso...');
+                console.log('PASO 3: Procesando acceso...');
                 const accessResult = dataManager.processAccess(capturedData, 'login');
                 
-                if (accessResult.success) {
-                    alert(`🎉 ACCESO CONCEDIDO\n\n` +
-                          `Bienvenido: ${accessResult.user.name}\n` +
-                          `Email: ${accessResult.user.email}\n` +
-                          `Sesión iniciada: ${new Date().toLocaleString()}`);
-                    
-                    showUserPanel(accessResult.user);
+                if (accessResult.success)  {
+                    alert('Usuario logeado exitosamente');
+                    window.location.href = './frontito.html';
                 }
+                
+                // if (accessResult.success) {
+                //     alert(`🎉 ACCESO CONCEDIDO\n\n` +
+                //           `Bienvenido: ${accessResult.user.name}\n` +
+                //           `Email: ${accessResult.user.email}\n` +
+                //           `Sesión iniciada: ${new Date().toLocaleString()}`);
+                    
+                //     showUserPanel(accessResult.user);
+                // }
                 
             } catch (error) {
                 alert(`❌ ERROR: ${error.message}`);
@@ -244,14 +241,6 @@
                 // PASO 1: Capturar datos
                 console.log('🔍 PASO 1: Obteniendo datos del registro...');
                 const capturedData = dataManager.captureRegisterData();
-                
-                // Mostrar datos capturados al usuario
-                alert(`DATOS OBTENIDOS:\n\n` +
-                      `Nombre: ${capturedData.name}\n` +
-                      `Email: ${capturedData.email}\n` +
-                      `Contraseña: ${'*'.repeat(capturedData.password.length)}\n` +
-                      `Términos: ${capturedData.terms ? 'Aceptados' : 'No aceptados'}\n` +
-                      `Tiempo: ${new Date(capturedData.timestamp).toLocaleString()}`);
                 
                 // PASO 2: Validar datos
                 console.log('✅ PASO 2: Validando datos...');
@@ -269,11 +258,6 @@
                 const registrationResult = dataManager.processAccess(capturedData, 'register');
                 
                 if (registrationResult.success) {
-                    alert(`🎉 REGISTRO EXITOSO\n\n` +
-                          `Usuario: ${registrationResult.user.name}\n` +
-                          `Email: ${registrationResult.user.email}\n` +
-                          `Registrado: ${new Date().toLocaleString()}\n\n` +
-                          `Ahora puedes iniciar sesión.`);
                     
                     // Limpiar formulario y cambiar a login
                     document.getElementById('registerForm').reset();
@@ -303,6 +287,7 @@
             `;
         }
 
+        //Función para cerrar sesión
         function logout() {
             localStorage.removeItem('currentUser');
             localStorage.removeItem('userSession');
