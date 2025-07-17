@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="styles/login.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="./assets/logo.png" type="image/x-icon" />
     <title>Login</title>
 </head>
 <body>
@@ -39,26 +40,29 @@
 
             <!-- Formulario de Registro -->
             <form class="form" id="registerForm" onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label for="registerName">Nombre Completo</label>
-                    <input type="text" id="registerName" name="name" placeholder="Nombre y apellidos" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerEmail">Correo</label>
-                    <input type="email" id="registerEmail" name="email" placeholder="registrarcorreo@nuevo.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="registerPassword">Contraseña</label>
-                    <input type="password" id="registerPassword" name="password" placeholder="••••••••" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirmar Contraseña</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                <div class="form-content">
+                    <div class="form-group">
+                        <label for="registerName">Nombre Completo</label>
+                        <input type="text" id="registerName" name="name" placeholder="Nombre y apellidos" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Correo</label>
+                        <input type="email" id="registerEmail" name="email" placeholder="registrarcorreo@nuevo.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Contraseña</label>
+                        <input type="password" id="registerPassword" name="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar Contraseña</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                    </div>
                 </div>
                 <div class="checkbox-group">
                     <input type="checkbox" id="acceptTerms" name="terms" required>
                     <label for="acceptTerms">Acepto los <a href="#" onclick="alert('Términos y condiciones')">Términos y condiciones</a></label>
                 </div>
+                
                 <button type="submit" class="submit-btn">Crear Cuenta</button>
                 <div class="form-footer">
                     ¿Ya tienes una cuenta? <a href="#" onclick="showForm('login')">Inicia sesión aquí</a>
