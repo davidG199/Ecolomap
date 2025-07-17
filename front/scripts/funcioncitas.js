@@ -103,39 +103,6 @@ function filtrarHistorial(historial, filtro) {
   return historial.filter((r) => new Date(r.fechaObservacion) >= inicio);
 }
 
-// === Graficar ===
-function graficar(historial) {
-  const labels = historial.map((d) =>
-    new Date(d.fechaObservacion).toLocaleString()
-  );
-  const valores = historial.map((d) => d.valor);
-
-  const ctx = document.getElementById("grafico").getContext("2d");
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Velocidad del viento (m/s)",
-          data: valores,
-          borderColor: "#2e86de",
-          backgroundColor: "rgba(46,134,222,0.2)",
-          fill: true,
-          tension: 0.3,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { x: { ticks: { maxTicksLimit: 6 } }, y: { beginAtZero: true } },
-    },
-  });
-}
-
 // === Obtener estación más cercana ===
 export async function obtenerEstacionMasCercana(lat, lng) {
   const info = document.getElementById("info");
@@ -145,7 +112,7 @@ export async function obtenerEstacionMasCercana(lat, lng) {
   // window.registrosEstacionActual = registrosOrdenados;
 
   try {
-    const res = await fetch("http://localhost:8080/api/viento");
+    const res = await fetch("http://localhost:8080/api/viento?limit=100000");
     const data = await res.json();
 
     const estaciones = data.filter(
@@ -155,6 +122,8 @@ export async function obtenerEstacionMasCercana(lat, lng) {
         typeof d.valorObservado === "number" &&
         d.descripcionSensor?.toLowerCase().includes("viento")
     );
+
+    // console.log(data);
 
     if (!estaciones.length) {
       info.textContent = "No se encontraron estaciones cercanas.";
@@ -170,6 +139,31 @@ export async function obtenerEstacionMasCercana(lat, lng) {
 
     const masCercana = estacionesConDistancia[0];
 
+    // Guardar última velocidad
+    ultimaVelocidadSeleccionada = parseFloat(masCercana.valorObservado);
+    actualizarPrediccion(ultimaVelocidadSeleccionada, filtroSeleccionado);
+
+    // Obtener historial de esta estación
+    const histRes = await fetch(
+      `http://localhost:8080/api/viento/estacion/${masCercana.codigoEstacion}?limit=100000`
+    );
+    const historialData = await histRes.json();
+    // console.log(historialData);
+
+    datosHistorial = historialData.map((r) => ({
+      fechaObservacion: r.fechaObservacion,
+      valor: parseFloat(r.valorObservado),
+    }));
+
+    datosHistorial.sort(
+      (a, b) => new Date(b.fechaObservacion) - new Date(a.fechaObservacion)
+    );
+
+    const ultimaFecha = datosHistorial[0]?.fechaObservacion;
+
+    // const filtrados = filtrarHistorial(datosHistorial, filtroSeleccionado);
+    // graficar(filtrados);
+
     info.innerHTML = `
       <strong>Estación:</strong> ${
         masCercana.nombreEstacion || "Sin nombre"
@@ -180,35 +174,18 @@ export async function obtenerEstacionMasCercana(lat, lng) {
       masCercana.longitud
     }<br>
       <strong>Velocidad:</strong> ${masCercana.valorObservado} m/s<br>
-      <strong>Fecha:</strong> ${new Date(
-        masCercana.fechaObservacion
-      ).toLocaleString()}<br>
+      <strong>Fecha:</strong> ${
+        ultimaFecha ? new Date(ultimaFecha).toLocaleString() : "No disponible"
+      }<br>
       <strong>Distancia:</strong> ${masCercana.distancia.toFixed(2)} km
     `;
-
-    // Guardar última velocidad
-    ultimaVelocidadSeleccionada = parseFloat(masCercana.valorObservado);
-    actualizarPrediccion(ultimaVelocidadSeleccionada, filtroSeleccionado);
-
-    // Obtener historial de esta estación
-    const histRes = await fetch(
-      `http://localhost:8080/api/viento/estacion/${masCercana.codigoEstacion}?limit=500`
-    );
-    const historialData = await histRes.json();
-
-    datosHistorial = historialData.map((r) => ({
-      fechaObservacion: r.fechaObservacion,
-      valor: parseFloat(r.valorObservado),
-    }));
-
-    const filtrados = filtrarHistorial(datosHistorial, filtroSeleccionado);
-    graficar(filtrados);
   } catch (error) {
     console.error(error);
     info.textContent = "Error al obtener datos.";
   }
 }
 
+//no funciona
 // === Recalcular al cambiar filtro ===
 document.getElementById("data_option_choose").addEventListener("change", () => {
   const filtro = document.getElementById("data_option_choose").value;
@@ -216,6 +193,7 @@ document.getElementById("data_option_choose").addEventListener("change", () => {
   // if (window.registrosEstacionActual) {
   //   actualizarSegunFiltro(window.registrosEstacionActual);
   // }
+  // console.log("change");
 
   if (datosHistorial.length) {
     const filtrados = filtrarHistorial(datosHistorial, filtro);

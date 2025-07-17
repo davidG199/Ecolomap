@@ -77,11 +77,14 @@
         .form-container {
             position: relative;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .form {
             display: none;
             animation: fadeIn 0.5s ease-in-out;
+            width: 100%;
         }
 
         .form.active {
@@ -131,10 +134,10 @@
         .submit-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            background: rgb(255,255,255);
             border: none;
             border-radius: 10px;
-            color: white;
+            color: rgb(72, 72, 72);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -145,24 +148,9 @@
             overflow: hidden;
         }
 
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .submit-btn:hover::before {
-            left: 100%;
-        }
-
         .submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: scale(1.01);
+            background: rgb(210,210,210);
         }
 
         .submit-btn:active {
@@ -214,6 +202,11 @@
             cursor: pointer;
         }
 
+        .form-content{
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
         @media (max-width: 550px) {
             .container {
                 padding: 30px 20px;
@@ -222,5 +215,20 @@
             
             .title {
                 font-size: 24px;
+            }
+        }
+
+        @media  (min-width: 768px) {
+            .form-container{
+                flex-direction: row;
+            }
+
+            .container{
+                max-width: 600px;
+            }
+
+            .form-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
             }
         }
