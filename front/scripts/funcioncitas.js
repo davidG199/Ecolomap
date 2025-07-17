@@ -1,5 +1,52 @@
+// === Configuración global ===
+const PRECIO_KWH = 0.1; // Precio por kWh en USD
+const turbinas = [
+  { nombre: "Vestas V52", min: 4, max: 12, produccionBase: 850, coef: 0.35 },
+  {
+    nombre: "Siemens SG 3.4",
+    min: 6,
+    max: 15,
+    produccionBase: 3400,
+    coef: 0.4,
+  },
+  { nombre: "GE 1.5s", min: 5, max: 13, produccionBase: 1500, coef: 0.38 },
+];
+
+let mapa, marcador, chart;
+let ultimaVelocidadSeleccionada = null;
+let datosHistorial = []; // para graficar
+
+// === Inicializar mapa ===
+export function inicializarMapa(callbackClick) {
+  mapa = L.map("mapa", {
+    center: [4.5709, -74.2973],
+    zoom: 6,
+    minZoom: 6,
+    maxZoom: 17,
+    maxBounds: [
+      [13.5, -82],
+      [-4.5, -65],
+    ],
+    maxBoundsViscosity: 1.0,
+  });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "OpenStreetMap",
+  }).addTo(mapa);
+
+  mapa.on("click", (e) => {
+    const { lat, lng } = e.latlng;
+
+    if (marcador) marcador.setLatLng(e.latlng);
+    else marcador = L.marker(e.latlng).addTo(mapa);
+
+    callbackClick(lat, lng);
+  });
+}
+
+// === Distancia Haversine ===
 function distanciaHaversine(lat1, lon1, lat2, lon2) {
-  const R = 6371; //radio de la tierra en km
+  const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
   const a =
@@ -7,143 +54,193 @@ function distanciaHaversine(lat1, lon1, lat2, lon2) {
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
 
-// let graficoGlobal;
+// === Elegir turbina más adecuada ===
+function elegirTurbina(velocidad) {
+  let mejor = turbinas.find((t) => velocidad >= t.min && velocidad <= t.max);
+  if (!mejor) {
+    mejor = turbinas.reduce((prev, curr) =>
+      Math.abs(curr.min - velocidad) < Math.abs(prev.min - velocidad)
+        ? curr
+        : prev
+    );
+  }
+  return mejor;
+}
 
+// === Producción energética ===
+function calcularProduccion(velocidad, filtro, turbina) {
+  const horas = filtro === "weekly" ? 24 * 7 : 24;
+  const energia = Math.pow(velocidad, 3) * turbina.coef * horas;
+  return Math.round(energia);
+}
+
+// === Predicción ===
+function actualizarPrediccion(velocidad, filtro) {
+  const turbina = elegirTurbina(velocidad);
+  const produccion = calcularProduccion(velocidad, filtro, turbina);
+  const ganancia = Math.round(produccion * PRECIO_KWH);
+
+  document.getElementById("velocidadProm").textContent = velocidad.toFixed(1);
+  document.getElementById("tipoTurbina").textContent = turbina.nombre;
+  document.getElementById("produccion").textContent =
+    produccion.toLocaleString();
+  document.getElementById("ganancia").textContent = ganancia.toLocaleString();
+}
+
+// === Filtrar historial según filtro ===
+function filtrarHistorial(historial, filtro) {
+  const ahora = new Date();
+  let inicio;
+  if (filtro === "daily") inicio = new Date(ahora - 24 * 60 * 60 * 1000);
+  else if (filtro === "weekly")
+    inicio = new Date(ahora - 7 * 24 * 60 * 60 * 1000);
+  else inicio = new Date(ahora - 3 * 60 * 60 * 1000); // recent = últimas 3h
+
+  return historial.filter((r) => new Date(r.fechaObservacion) >= inicio);
+}
+
+// === Graficar ===
+function graficar(historial) {
+  const labels = historial.map((d) =>
+    new Date(d.fechaObservacion).toLocaleString()
+  );
+  const valores = historial.map((d) => d.valor);
+
+  const ctx = document.getElementById("grafico").getContext("2d");
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Velocidad del viento (m/s)",
+          data: valores,
+          borderColor: "#2e86de",
+          backgroundColor: "rgba(46,134,222,0.2)",
+          fill: true,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { maxTicksLimit: 6 } }, y: { beginAtZero: true } },
+    },
+  });
+}
+
+// === Obtener estación más cercana ===
 export async function obtenerEstacionMasCercana(lat, lng) {
   const info = document.getElementById("info");
   info.textContent = "Buscando estación más cercana...";
-
-  // const hoy = new Date();
-  // const haceUnAnio = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
-  // const fechaISO = haceUnAnio.toISOString().split("T")[0];
-  const url = `http://localhost:8080/api/viento`;
+  const filtroSeleccionado =
+    document.getElementById("data_option_choose").value;
+  // window.registrosEstacionActual = registrosOrdenados;
 
   try {
-    const res = await fetch(url);
+    const res = await fetch("http://localhost:8080/api/viento");
     const data = await res.json();
-    // console.log("Datos obtenidos:", data);
 
-    const estacionesFiltradas = data.filter((d) => {
-      const LATOK =
-        typeof d.latitud === "number" && typeof d.longitud === "number";
-      const VALOROK = typeof d.valorObservado === "number";
-      const VIENTOOK = d.descripcionSensor
-        ?.toLowerCase()
-        .trim()
-        .includes("viento");
-
-      return LATOK && VALOROK && VIENTOOK;
-    });
-
-    const estacionesMap = new Map();
-
-    estacionesFiltradas.forEach((reg) => {
-      const codigo = reg.codigoEstacion;
-      if (!estacionesMap.has(codigo)) {
-        estacionesMap.set(codigo, []);
-      }
-      estacionesMap.get(codigo).push(reg);
-    });
-
-    //calculamos la distancia
-    const estacionesConDistancia = Array.from(estacionesMap.values()).map(
-      (listaRegistros) => {
-        const primerRegistro = listaRegistros[0]; // para lat/lng y nombre
-        const dist = distanciaHaversine(
-          lat,
-          lng,
-          primerRegistro.latitud,
-          primerRegistro.longitud
-        );
-        return {
-          codigo: primerRegistro.codigoEstacion,
-          lat: primerRegistro.latitud,
-          lng: primerRegistro.longitud,
-          nombreEstacion: primerRegistro.nombreEstacion,
-          departamento: primerRegistro.departamento,
-          municipio: primerRegistro.municipio,
-          registros: listaRegistros, // todos los registros de esa estación
-          distancia: dist,
-        };
-      }
+    const estaciones = data.filter(
+      (d) =>
+        typeof d.latitud === "number" &&
+        typeof d.longitud === "number" &&
+        typeof d.valorObservado === "number" &&
+        d.descripcionSensor?.toLowerCase().includes("viento")
     );
 
-    if (estacionesConDistancia.length === 0) {
+    if (!estaciones.length) {
       info.textContent = "No se encontraron estaciones cercanas.";
       return;
     }
 
-    //tomamos la mas reciente
-    estacionesConDistancia.sort((a, b) => a.distancia - b.distancia);
-    const estacionCercana = estacionesConDistancia[0];
+    const estacionesConDistancia = estaciones
+      .map((est) => ({
+        ...est,
+        distancia: distanciaHaversine(lat, lng, est.latitud, est.longitud),
+      }))
+      .sort((a, b) => a.distancia - b.distancia);
 
-    // ✅ Ordenar registros de esa estación por fecha y tomar el más reciente
-    const registrosOrdenados = estacionCercana.registros.sort(
-      (a, b) => new Date(b.fechaObservacion) - new Date(a.fechaObservacion)
-    );
-    const masReciente = registrosOrdenados[0];
+    const masCercana = estacionesConDistancia[0];
 
     info.innerHTML = `
-      <strong>Nombre estación:</strong> ${estacionCercana.nombreEstacion}<br>
-      <strong>Departamento:</strong> ${estacionCercana.departamento}<br>
-      <strong>Municipio:</strong> ${estacionCercana.municipio}<br>
-      <strong>Latitud:</strong> ${estacionCercana.lat.toFixed(6)}<br>
-      <strong>Longitud:</strong> ${estacionCercana.lng.toFixed(6)}<br>
-      <strong>Velocidad del viento:</strong> ${masReciente.valorObservado} m/s<br>
-      <strong>Fecha de observación:</strong> ${new Date(masReciente.fechaObservacion).toLocaleString()}<br>
-      <strong>Distancia al punto:</strong> ${estacionCercana.distancia.toFixed(2)} km
+      <strong>Estación:</strong> ${
+        masCercana.nombreEstacion || "Sin nombre"
+      }<br>
+      <strong>Departamento:</strong> ${masCercana.departamento || "-"}<br>
+      <strong>Municipio:</strong> ${masCercana.municipio || "-"}<br>
+      <strong>Lat/Lon:</strong> ${masCercana.latitud}, ${
+      masCercana.longitud
+    }<br>
+      <strong>Velocidad:</strong> ${masCercana.valorObservado} m/s<br>
+      <strong>Fecha:</strong> ${new Date(
+        masCercana.fechaObservacion
+      ).toLocaleString()}<br>
+      <strong>Distancia:</strong> ${masCercana.distancia.toFixed(2)} km
     `;
 
-    // Guardar datos recientes para graficar
-    const filtro =
-      document.querySelector('input[name="tipo"]:checked')?.value || "año";
-    const hoyFiltro = new Date();
-    let inicioFiltro;
+    // Guardar última velocidad
+    ultimaVelocidadSeleccionada = parseFloat(masCercana.valorObservado);
+    actualizarPrediccion(ultimaVelocidadSeleccionada, filtroSeleccionado);
 
-    if (filtro === "año") {
-      inicioFiltro = new Date(
-        hoyFiltro.getFullYear() - 1,
-        hoyFiltro.getMonth(),
-        hoyFiltro.getDate()
-      );
-    } else if (filtro === "mes") {
-      inicioFiltro = new Date(
-        hoyFiltro.getFullYear(),
-        hoyFiltro.getMonth() - 1,
-        hoyFiltro.getDate()
-      );
-    } else {
-      inicioFiltro = new Date(hoyFiltro);
-      inicioFiltro.setDate(hoyFiltro.getDate() - 2);
-    }
+    // Obtener historial de esta estación
+    const histRes = await fetch(
+      `http://localhost:8080/api/viento/estacion/${masCercana.codigoEstacion}?limit=500`
+    );
+    const historialData = await histRes.json();
 
-    const datosFiltrados = registrosOrdenados
-      .filter(r => new Date(r.fechaObservacion) >= inicioFiltro)
-      .sort((a, b) => new Date(a.fechaObservacion) - new Date(b.fechaObservacion))
-      .map(r => ({
-        fecha: r.fechaObservacion,
-        valor: parseFloat(r.valorObservado)
-      }));
+    datosHistorial = historialData.map((r) => ({
+      fechaObservacion: r.fechaObservacion,
+      valor: parseFloat(r.valorObservado),
+    }));
 
-    window.datosGraficar = registrosOrdenados;
+    const filtrados = filtrarHistorial(datosHistorial, filtroSeleccionado);
+    graficar(filtrados);
   } catch (error) {
     console.error(error);
-    info.textContent = "Error al obtener los datos.";
+    info.textContent = "Error al obtener datos.";
   }
 }
 
-//boton para graficar
-document.getElementById("btnGraficar").addEventListener("click", () => {
-  if (!window.datosGraficar || window.datosGraficar.length === 0) {
-    alert("No hay datos para graficar.");
-    return;
-  }
+// === Recalcular al cambiar filtro ===
+document.getElementById("data_option_choose").addEventListener("change", () => {
+  const filtro = document.getElementById("data_option_choose").value;
 
-  localStorage.setItem("datosGrafica", JSON.stringify(window.datosGraficar));
+  // if (window.registrosEstacionActual) {
+  //   actualizarSegunFiltro(window.registrosEstacionActual);
+  // }
+
+  if (datosHistorial.length) {
+    const filtrados = filtrarHistorial(datosHistorial, filtro);
+    graficar(filtrados);
+
+    // Calcular velocidad promedio del filtro
+    let velocidadPromedio;
+    if (filtro === "recent") {
+      // Usar la última velocidad seleccionada
+      velocidadPromedio = ultimaVelocidadSeleccionada;
+    } else {
+      // Calcular promedio de los datos filtrados
+      const valores = filtrados.map((d) => d.valor);
+      velocidadPromedio = valores.reduce((a, b) => a + b, 0) / valores.length;
+    }
+
+    if (velocidadPromedio) {
+      actualizarPrediccion(velocidadPromedio, filtro);
+    }
+  }
+});
+
+// === Botón ver gráfica completa ===
+document.getElementById("btnGraficar").addEventListener("click", () => {
+  if (!datosHistorial.length) return alert("No hay datos para graficar.");
+  localStorage.setItem("datosGrafica", JSON.stringify(datosHistorial));
   window.open("graficaCompleta.html", "_blank");
 });

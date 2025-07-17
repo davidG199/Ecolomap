@@ -37,12 +37,10 @@
 
         <div class="panel-content">
           <div id="filtros" class="panel-controls">
-            <h3>Filtros de Visualización</h3>
             <div class="control-group">
               <label for="data_option_choose">Tipo de datos:</label>
               <div class="option-group">
                 <select name="data_option_choose" id="data_option_choose">
-                  <option value="">Escoge una opcion</option>
                   <option value="recent">Datos Recientes</option>
                   <option value="daily">Promedio Diario</option>
                   <option value="weekly">Promedio Semanal</option>
@@ -54,6 +52,7 @@
           <div id="info">Selecciona un punto en el mapa...</div>
 
           <button id="btnGraficar">Ver gráfica completa</button>
+          <canvas id="grafico" style="width:100%; height:200px;"></canvas>
 
           <div id="prediccion">
             <h3>Predicción de ganancia</h3>
@@ -63,15 +62,15 @@
             </p>
             <p>
               <strong>Tipo de turbina:</strong>
-              <span id="tipoTurbina">Vestas V52</span>
+              <span id="tipoTurbina">--</span>
             </p>
             <p>
               <strong>Producción estimada:</strong>
-              <span id="produccion">--</span> kWh/año
+              <span id="produccion">--</span> kWh
             </p>
             <p>
               <strong>Ganancia estimada:</strong>
-              <span id="ganancia">--</span> USD/año
+              <span id="ganancia">--</span> USD
             </p>
           </div>
         </div>
@@ -92,8 +91,8 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="./scripts/aside.js"></script>
     <script type="module">
-      import { inicializarMapa } from "./scripts/mapita.js";
-      import { obtenerEstacionMasCercana } from "./scripts/funcioncitas.js";
+      // import { inicializarMapa } from "./scripts/mapita.js";
+      import { obtenerEstacionMasCercana, inicializarMapa } from "./scripts/funcioncitas.js";
 
       window.addEventListener("DOMContentLoaded", () => {
         inicializarMapa(obtenerEstacionMasCercana);
