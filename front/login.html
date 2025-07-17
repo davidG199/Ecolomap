@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="styles/login.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+
+     <div class="container">
+        <h1 class="title">Bienvenido a Ecolomap</h1>
+        
+        <div class="form-toggle">
+            <button class="toggle-btn active" onclick="showForm('login')">Iniciar Sesión</button>
+            <button class="toggle-btn" onclick="showForm('register')">Registrate</button>
+        </div>
+
+        <div class="form-container">
+            <!-- Formulario de Login -->
+            <form class="form active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginEmail">Correo</label>
+                    <input type="email" id="loginEmail" name="email" placeholder="ingresa@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="••••••••" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rememberMe" name="remember">
+                    <label for="rememberMe">Recordar mi sesión</label>
+                </div>
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+                <div class="form-footer">
+                    <a href="#" onclick="alert('Función de recuperación de contraseña')">¿Olvidaste tu contraseña?</a>
+                </div>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form class="form" id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="registerName">Nombre Completo</label>
+                    <input type="text" id="registerName" name="name" placeholder="Nombre y apellidos" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Correo</label>
+                    <input type="email" id="registerEmail" name="email" placeholder="registrarcorreo@nuevo.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
+                    <input type="password" id="registerPassword" name="password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Contraseña</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="acceptTerms" name="terms" required>
+                    <label for="acceptTerms">Acepto los <a href="#" onclick="alert('Términos y condiciones')">Términos y condiciones</a></label>
+                </div>
+                <button type="submit" class="submit-btn">Crear Cuenta</button>
+                <div class="form-footer">
+                    ¿Ya tienes una cuenta? <a href="#" onclick="showForm('login')">Inicia sesión aquí</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="scripts/login.js"></script>
+</body>
+</html>
